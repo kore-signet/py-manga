@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pprint
 import search_parsers
+import series_parsers
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
@@ -15,7 +16,8 @@ def search(query):
     }
     return results
 
-
-
-pp = pprint.PrettyPrinter(indent=2)
-pp.pprint(search('still sick'))
+def series(id):
+    r = requests.get('https://mangaupdates.com/series.html',params={'id': id})
+    soup = BeautifulSoup(r.text,'html.parser')
+    content = soup.find('div',class_='center-side-bar').find_all('div',class_='row',recursive=False)[1].find('div',id='main_content').find('div',class_='p-2',recursive=False).find('div',class_='row',recursive=False)
+    return series_parsers.parse_series(content)
