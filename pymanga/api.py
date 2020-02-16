@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from .parsers import search_parsers, series_parsers
+from .parsers import search_parsers, series_parsers, release_parsers
+#from parsers import search_parsers, series_parsers, releases_parsers
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
@@ -19,3 +20,9 @@ def series(id):
     soup = BeautifulSoup(r.text,'html.parser')
     content = soup.find('div',class_='center-side-bar').find_all('div',class_='row',recursive=False)[1].find('div',id='main_content').find('div',class_='p-2',recursive=False).find('div',class_='row',recursive=False)
     return series_parsers.parse_series(content)
+
+def releases(id):
+    r = requests.post('https://www.mangaupdates.com/releases.html',params={'stype': 'series','search': id,'page':1},data={'perpage':100})
+    soup = BeautifulSoup(r.text,'html.parser')
+    content = soup.find('div',class_='center-side-bar').find_all('div',class_='row',recursive=False)[1].find('div',id='main_content').find('div',class_='p-2',recursive=False).find('div',class_='row',recursive=False)
+    return releases_parsers.parse_releases(content)
