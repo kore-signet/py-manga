@@ -39,7 +39,10 @@ def parse_col_1(col,manga):
         manga['latest_releases'].append(release)
 
     manga['status'] = str(contents[6].string).replace('\n','')
-    manga['completely_scanlated'] = str(contents[7].string).replace('\n','')
+    if str(contents[7].string).replace('\n','') == 'No':
+        manga['completely_scanlated'] = False
+    else:
+        manga['completely_scanlated'] = True
     manga['anime_chapters'] = str(contents[8].string).replace('\n','')
     manga['user_reviews'] = str(contents[9].string).replace('\n','')
 
@@ -87,14 +90,14 @@ def parse_col_2(col,manga):
     for author in contents[5].find_all('a'):
         manga['authors'].append({
             'name': str(author.u.string),
-            'id': author['href'].replace('https://www.mangaupdates.com/authors.html?','')
+            'id': author['href'].replace('https://www.mangaupdates.com/authors.html?id=','')
         })
 
     manga['artists'] = []
     for artist in contents[6].find_all('a'):
         manga['artists'].append({
             'name': str(artist.u.string),
-            'id': artist['href'].replace('https://www.mangaupdates.com/authors.html?','')
+            'id': artist['href'].replace('https://www.mangaupdates.com/authors.html?id=','')
         })
 
     manga['year'] = str(contents[7].string).replace('\n','')
@@ -121,7 +124,7 @@ def parse_col_2(col,manga):
     pos_r = contents[12].contents
 
     manga['positions'] = {
-        'weekly': str(pos_r[2]),
+        'weekly': str(pos_r[2].string),
         'weekly_change': str(pos_r[5].string).replace('(','').replace(')',''),
         'monthly': str(pos_r[9].string),
         'monthly_change': str(pos_r[12].string).replace('(','').replace(')',''),
@@ -129,8 +132,8 @@ def parse_col_2(col,manga):
         'tri_monthly_change': str(pos_r[19].string).replace('(','').replace(')',''),
         'six_monthly': str(pos_r[23].string),
         'six_monthly_change': str(pos_r[26].string).replace('(','').replace(')',''),
-        'yearly': str(pos_r[29].string),
-        'yearly_change': str(pos_r[32].string).replace('(','').replace(')','')
+        'yearly': str(pos_r[30].string),
+        'yearly_change': str(pos_r[33].string).replace('(','').replace(')','')
     }
 
     read_lists = contents[13].find_all('a')
