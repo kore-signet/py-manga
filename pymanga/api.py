@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from .parsers import search_parsers, series_parsers, release_parsers
-#from parsers import search_parsers, series_parsers, releases_parsers
+from .parsers import search_parsers, series_parsers, releases_parsers
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
