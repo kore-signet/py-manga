@@ -24,19 +24,27 @@ def parse_col_1(col,manga):
 
     manga['latest_releases'] = []
     numbers = contents[5].find_all('i')[:-1]
-    groups = contents[5].find_all('a')
+    groups = contents[5].find_all('a')[:-1]
     dates = contents[5].find_all('span')
 
-    for i in range(0,len(numbers)):
+    for i in range(0,len(dates)):
         release = {
-            'chapter': str(numbers[i].string),
             'group': {
                 'name': str(groups[i].string),
                 'id': str(groups[i]['href'].replace('https://www.mangaupdates.com/groups.html?id=',''))
             },
             'date': dates[i]['title']
         }
+
+        # this is to check if there are volume numbers. its a bad solution, folks!
+        if len(numbers) >= len(dates) * 2:
+            release['volume'] = str(numbers[i].string)
+            release['chapter'] = str(numbers[i+1].string)
+        else:
+            release['chapter'] =  str(numbers[i].string)
+
         manga['latest_releases'].append(release)
+
 
     manga['status'] = str(contents[6].string).replace('\n','')
     if str(contents[7].string).replace('\n','') == 'No':

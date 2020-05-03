@@ -94,3 +94,4 @@ def parse_authors(list):
         results.append(author)
 
     return results
+
