@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pymanga-alisw",
-    version="0.0.1",
+    version="0.0.2",
     author="Alis Wayland",
     author_email="waylandalis@gmail.com",
     description="A library to get information from mangaupdates.com",

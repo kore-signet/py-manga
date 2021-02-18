@@ -10,3 +10,4 @@ this is where py-manga comes in. using beautifulsoup, it parses all the informat
 ### Currently Supported
 - Series information
 - Searching
+- Advanced/Genre Searching

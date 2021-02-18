@@ -1,6 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from .parsers import search_parsers, series_parsers, releases_parsers
+import urllib.parse as urlparse
+import re
+import os
+from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
@@ -25,6 +28,42 @@ def search(query):
     except:
         results['authors'] = []
     return results
+
+# Warning: this can take a long time on general searches with the 'all_pages' option enabled!
+def advanced_search(params,all_pages=False,page=1):
+    params['page'] = page
+    params['perpage'] = 100
+
+    # do some quality of life processing (turn list args. into properly escaped parameters)
+    params['genre'] = '_'.join(params.get('genre',[]))
+    params['exclude_genre'] = '_'.join(params.get('exclude_genre',[]))
+    params['category'] ='_'.join(params.get('category',[]))
+
+    payload = urlparse.urlencode(params,safe='+')
+
+    r = requests.get('https://mangaupdates.com/series.html',params=payload)
+    soup = BeautifulSoup(r.text,'html.parser')
+
+    # find page count. i know regex is a crime but.
+
+    pages = re.search(r'Pages \((\d+)\)',r.text)
+    if pages:
+        pages = int(pages.group(1))
+    else:
+        pages = 1
+
+    results = adv_search_parser.parse_results(soup)
+
+    # if all pages is set, request every page and append their results to the return value
+
+    if all_pages and pages > 1:
+        for p in range(page+1,pages+1):
+            r, _ = advanced_search(params,page=p)
+            results = results + r
+
+        os.sleep(1) # be polite!
+
+    return (results,pages)
 
 def series(id):
     r = requests.get('https://mangaupdates.com/series.html',params={'id': id})
