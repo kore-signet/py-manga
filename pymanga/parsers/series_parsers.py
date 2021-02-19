@@ -66,12 +66,15 @@ def parse_col_1(col,manga):
         'link': 'https://www.mangaupdates.com/' + contents[10].a.get('href','')
     }
 
-    average_raw = contents[11].contents
-    manga['average'] = {
-        'average': str(average_raw[0]).replace('Average:','').replace(' ',''),
-        'votes': str(average_raw[2]).replace('(','').replace(')',''),
-        'bayesian': str(average_raw[5]).replace('<b>','').replace('</b>','')
-    }
+    try:
+        average_raw = contents[11].contents
+        manga['average'] = {
+            'average': str(average_raw[0]).replace('Average:','').replace(' ',''),
+            'votes': str(average_raw[2]).replace('(','').replace(')',''),
+            'bayesian': str(average_raw[5]).replace('<b>','').replace('</b>','')
+        }
+    except:
+        manga['average'] = {}
 
     manga['last_updated'] = str(contents[12].string).replace('\n','')
 
@@ -85,12 +88,13 @@ def parse_col_2(col,manga):
         manga['genres'].append(str(genre.u.string))
 
     manga['categories'] = []
-    for cat_raw in contents[2].div.ul.find_all('li'):
-        cat = cat_raw.find('a',rel='nofollow')
-        manga['categories'].append({
-            'category': str(cat.string),
-            'score': str(cat['title']).replace('Score:','')
-        })
+    if contents[2].div:
+        for cat_raw in contents[2].div.ul.find_all('li'):
+            cat = cat_raw.find('a',rel='nofollow')
+            manga['categories'].append({
+                'category': str(cat.string),
+                'score': str(cat['title']).replace('Score:','')
+            })
 
     manga['category_recs'] = []
     for rec in contents[3].find_all('a'):
@@ -151,10 +155,10 @@ def parse_col_2(col,manga):
         'yearly_change': str(pos_r[33].string).replace('(','').replace(')','')
     }
 
-    read_lists = contents[13].find_all('a')
+    read_lists = contents[13].find_all('b')
     manga['reading_lists'] = {
-        'reading': str(read_lists[0].u.string),
-        'wish': str(read_lists[1].u.string),
-        'unfinished': str(read_lists[2].u.string),
-        'custom': str(read_lists[3].u.string)
+        'reading': str(read_lists[0].get_text()),
+        'wish': str(read_lists[1].get_text()),
+        'unfinished': str(read_lists[2].get_text()),
+        'custom': str(read_lists[3].get_text())
     }
