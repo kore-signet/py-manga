@@ -2,11 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import re
+import traceback
 import os
 from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
+    print(r.request.body)
     soup = BeautifulSoup(r.text,'html.parser')
     lists = soup.find('div',class_='center-side-bar').find_all('div',class_='row',recursive=False)[1].find('div',id='main_content').find_all('div',class_='row')
 
@@ -18,6 +20,7 @@ def search(query):
     try:
         results['series'] = search_parsers.parse_series(lists[1])
     except:
+        traceback.print_exc()
         results['series'] = []
     try:
         results['scanlators'] = search_parsers.parse_scanlators(lists[2])
@@ -84,6 +87,7 @@ def series(id):
     try:
         series = series_parsers.parse_series(content)
     except:
+        traceback.print_exc()
         series = {}
     return series
 

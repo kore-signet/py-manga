@@ -1,4 +1,5 @@
 import markdownify
+from bs4 import Comment
 
 def parse_series(content):
     manga = {}
@@ -15,14 +16,18 @@ def parse_series(content):
 def parse_col_1(col,manga):
     contents = col.find_all('div',class_='sContent',recursive=False)
 
-    manga['description'] = markdownify.markdownify(contents[0].encode_contents())
+    desc_tag = contents[0]
+    for c in desc_tag.findAll(text=lambda text:isinstance(text, Comment)):
+        c.extract()
+
+    manga['description'] = markdownify.markdownify(desc_tag.encode_contents())
     manga['type'] = str(contents[1].string).replace('\n','')
     manga['related_series'] = str(contents[2].string).replace('\n','')
     manga['associated_names'] = str(contents[3].string).replace('\n','')
     if contents[4].a is None:
         manga['group'] = {'name': str(contents[4].string)}
     else:
-        manga['group'] = {'name': str(contents[4].a.string), 'id': contents[4].a['href'].replace('https://www.mangaupdates.com/groups.html?id=','')}
+        manga['group'] = {'name': str(contents[4].a.string), 'id': contents[4].a.get('href','').replace('https://www.mangaupdates.com/groups.html?id=','')}
 
     manga['latest_releases'] = []
     numbers = contents[5].find_all('i')[:-1]
@@ -33,7 +38,7 @@ def parse_col_1(col,manga):
         release = {
             'group': {
                 'name': str(groups[i].string),
-                'id': str(groups[i]['href'].replace('https://www.mangaupdates.com/groups.html?id=',''))
+                'id': str(groups[i].get('href','').replace('https://www.mangaupdates.com/groups.html?id=',''))
             },
             'date': dates[i]['title']
         }
@@ -58,7 +63,7 @@ def parse_col_1(col,manga):
 
     manga['forum'] = {
         'status': str(contents[10].string),
-        'link': 'https://www.mangaupdates.com/' + contents[10].a['href']
+        'link': 'https://www.mangaupdates.com/' + contents[10].a.get('href','')
     }
 
     average_raw = contents[11].contents
@@ -90,37 +95,37 @@ def parse_col_2(col,manga):
     manga['category_recs'] = []
     for rec in contents[3].find_all('a'):
         manga['category_recs'].append({
-            'name': str(rec.u.string),
-            'id': rec['href'].replace('series.html?id=','')
+            'name': str(rec.get_text()),
+            'id': rec.get('href','').replace('series.html?id=','')
         })
 
-    manga['recs'] = str(contents[4].string).replace('\n','')
+    manga['recs'] = str(contents[4].get_text()).replace('\n','')
 
     manga['authors'] = []
     for author in contents[5].find_all('a'):
         manga['authors'].append({
-            'name': str(author.u.string),
-            'id': author['href'].replace('https://www.mangaupdates.com/authors.html?id=','')
+            'name': str(author.get_text()),
+            'id': author.get('href','').replace('https://www.mangaupdates.com/authors.html?id=','')  if contents[5].a else 'N/A'
         })
 
     manga['artists'] = []
     for artist in contents[6].find_all('a'):
         manga['artists'].append({
-            'name': str(artist.u.string),
-            'id': artist['href'].replace('https://www.mangaupdates.com/authors.html?id=','')
+            'name': str(artist.get_text()),
+            'id': artist.get('href','').replace('https://www.mangaupdates.com/authors.html?id=','')  if contents[6].a else 'N/A'
         })
 
-    manga['year'] = str(contents[7].string).replace('\n','')
+    manga['year'] = str(contents[7].get_text()).replace('\n','')
 
     manga['publisher'] = {
-        'name': str(contents[8].a.u.string),
-        'id': contents[8].a['href'].replace('https://www.mangaupdates.com/publishers.html?id=','')
+        'name': str(contents[8].get_text()),
+        'id': contents[8].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','')  if contents[8].a else 'N/A'
     }
 
     # TODO: add publisher info
     manga['serialized'] = {
-        'name': str(contents[9].a.u.string),
-        'link': 'https://www.mangaupdates.com/' + contents[9].a['href']
+        'name': str(contents[9].get_text()),
+        'link': 'https://www.mangaupdates.com/' + contents[9].a.get('href','') if contents[9].a else ''
     }
 
     manga['licensed'] = str(contents[10].string).replace('\n','')
@@ -128,7 +133,7 @@ def parse_col_2(col,manga):
     # TODO: add volume/ongoing info
     manga['english_publisher'] = {
         'name': str(contents[11].get_text()),
-        'id': str(contents[11].a['href'].replace('https://www.mangaupdates.com/publishers.html?id=','') if contents[11].a else None)
+        'id': str(contents[11].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','') if contents[11].a else 'N/A')
     }
 
     pos_r = contents[12].contents
