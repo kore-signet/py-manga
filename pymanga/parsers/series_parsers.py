@@ -13,7 +13,7 @@ def parse_series(content):
 def parse_col_1(col,manga):
     contents = col.find_all('div',class_='sContent',recursive=False)
 
-    manga['description'] = str(contents[0].string)
+    manga['description'] = str(contents[0].get_text())
     manga['type'] = str(contents[1].string).replace('\n','')
     manga['related_series'] = str(contents[2].string).replace('\n','')
     manga['associated_names'] = str(contents[3].string).replace('\n','')
