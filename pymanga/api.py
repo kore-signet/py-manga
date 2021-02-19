@@ -8,7 +8,6 @@ from .parsers import search_parsers, series_parsers, releases_parsers, adv_searc
 
 def search(query):
     r = requests.post('https://mangaupdates.com/search.html',params={'search':query})
-    print(r.request.body)
     soup = BeautifulSoup(r.text,'html.parser')
     lists = soup.find('div',class_='center-side-bar').find_all('div',class_='row',recursive=False)[1].find('div',id='main_content').find_all('div',class_='row')
 
