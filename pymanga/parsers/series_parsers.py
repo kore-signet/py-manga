@@ -125,8 +125,8 @@ def parse_col_2(col,manga):
 
     # TODO: add volume/ongoing info
     manga['english_publisher'] = {
-        'name': str(contents[11].a.u.string),
-        'id': str(contents[11].a['href'].replace('https://www.mangaupdates.com/publishers.html?id=',''))
+        'name': str(contents[11].get_text()),
+        'id': str(contents[11].a['href'].replace('https://www.mangaupdates.com/publishers.html?id=','') if contents[11].a else None)
     }
 
     pos_r = contents[12].contents
