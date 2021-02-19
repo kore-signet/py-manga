@@ -22,12 +22,17 @@ def parse_col_1(col,manga):
 
     manga['description'] = markdownify.markdownify(desc_tag.encode_contents())
     manga['type'] = str(contents[1].string).replace('\n','')
-    manga['related_series'] = str(contents[2].string).replace('\n','')
-    manga['associated_names'] = str(contents[3].string).replace('\n','')
-    if contents[4].a is None:
-        manga['group'] = {'name': str(contents[4].string)}
+
+    manga['related_series'] = [name for name in contents[2].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
+    manga['associated_names'] = [name for name in contents[3].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
+
+    if 'N/A' not in contents[4].get_text():
+        if contents[4].a is None:
+            manga['group'] = {'name': str(contents[4].get_text().strip())}
+        else:
+            manga['group'] = {'name': str(contents[4].get_text().strip()), 'id': contents[4].a.get('href','').replace('https://www.mangaupdates.com/groups.html?id=','')}
     else:
-        manga['group'] = {'name': str(contents[4].a.string), 'id': contents[4].a.get('href','').replace('https://www.mangaupdates.com/groups.html?id=','')}
+        manga['group'] = None
 
     manga['latest_releases'] = []
     numbers = contents[5].find_all('i')[:-1]
@@ -74,7 +79,7 @@ def parse_col_1(col,manga):
             'bayesian': str(average_raw[5]).replace('<b>','').replace('</b>','')
         }
     except:
-        manga['average'] = {}
+        manga['average'] = None
 
     manga['last_updated'] = str(contents[12].string).replace('\n','')
 
@@ -122,13 +127,13 @@ def parse_col_2(col,manga):
     manga['year'] = str(contents[7].get_text()).replace('\n','')
 
     manga['publisher'] = {
-        'name': str(contents[8].get_text()),
+        'name': str(contents[8].get_text().strip()),
         'id': contents[8].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','')  if contents[8].a else 'N/A'
     }
 
     # TODO: add publisher info
     manga['serialized'] = {
-        'name': str(contents[9].get_text()),
+        'name': str(contents[9].get_text().strip()),
         'link': 'https://www.mangaupdates.com/' + contents[9].a.get('href','') if contents[9].a else ''
     }
 
@@ -136,7 +141,7 @@ def parse_col_2(col,manga):
 
     # TODO: add volume/ongoing info
     manga['english_publisher'] = {
-        'name': str(contents[11].get_text()),
+        'name': str(contents[11].get_text().strip()),
         'id': str(contents[11].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','') if contents[11].a else 'N/A')
     }
 
@@ -157,8 +162,8 @@ def parse_col_2(col,manga):
 
     read_lists = contents[13].find_all('b')
     manga['reading_lists'] = {
-        'reading': str(read_lists[0].get_text()),
-        'wish': str(read_lists[1].get_text()),
-        'unfinished': str(read_lists[2].get_text()),
-        'custom': str(read_lists[3].get_text())
+        'reading': str(read_lists[0].get_text().strip()),
+        'wish': str(read_lists[1].get_text().strip()),
+        'unfinished': str(read_lists[2].get_text().strip()),
+        'custom': str(read_lists[3].get_text().strip())
     }
