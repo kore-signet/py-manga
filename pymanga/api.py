@@ -39,11 +39,13 @@ def advanced_search(params,all_pages=False,page=1):
     params['exclude_genre'] = '_'.join(params.get('exclude_genre',[]))
     params['category'] ='_'.join(params.get('category',[]))
 
+    if 'name' in params:
+        params['search'] = params['name']
+
     payload = urlparse.urlencode(params,safe='+')
 
     r = requests.get('https://mangaupdates.com/series.html',params=payload)
     soup = BeautifulSoup(r.text,'html.parser')
-
     # find page count. i know regex is a crime but.
 
     pages = re.search(r'Pages \((\d+)\)',r.text)
@@ -64,6 +66,15 @@ def advanced_search(params,all_pages=False,page=1):
         os.sleep(1) # be polite!
 
     return (results,pages)
+
+# advanced search, but with a generator!
+def advanced_search_iter(params):
+    first_batch, total_pages = advanced_search(params)
+    yield from first_batch
+
+    for p in range(2,total_pages+1):
+        r, _ = advanced_search(params,page=p)
+        yield from r
 
 def series(id):
     r = requests.get('https://mangaupdates.com/series.html',params={'id': id})
