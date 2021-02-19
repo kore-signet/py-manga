@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py-manga",
-    version="0.0.3",
+    version="0.0.4",
     author="Alis Wayland",
     author_email="waylandalis@gmail.com",
     description="A library to get information from mangaupdates.com",
