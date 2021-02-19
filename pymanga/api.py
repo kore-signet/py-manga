@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import re
 import os
-import traceback
 from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser
 
 def search(query):

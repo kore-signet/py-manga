@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py-manga",
-    version="0.0.4",
+    version="0.0.5",
     author="Alis Wayland",
     author_email="waylandalis@gmail.com",
     description="A library to get information from mangaupdates.com",
@@ -18,5 +18,10 @@ setuptools.setup(
         "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.4',
+    install_requires=[
+        'markdownify',
+        'beautifulsoup4',
+        'requests'
+    ],
+    python_requires='>=3.4'
 )
