@@ -1,5 +1,6 @@
 import markdownify
 from bs4 import Comment
+import re
 
 def parse_series(content):
     manga = {}
@@ -17,14 +18,15 @@ def parse_col_1(col,manga):
     contents = col.find_all('div',class_='sContent',recursive=False)
 
     desc_tag = contents[0]
-    for c in desc_tag.findAll(text=lambda text:isinstance(text, Comment)):
+    for c in desc_tag.findAll(text=lambda text:isinstance(text, Comment) or text.name == 'script'):
         c.extract()
 
-    manga['description'] = markdownify.markdownify(desc_tag.encode_contents())
+    comment_expr = re.compile(r'<!--(?:.|\n)+?\/\/-->')
+    manga['description'] = markdownify.markdownify(comment_expr.sub('',desc_tag.encode_contents().decode('utf-8')))
     manga['type'] = str(contents[1].string).replace('\n','')
 
-    manga['related_series'] = [name for name in contents[2].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
-    manga['associated_names'] = [name for name in contents[3].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
+    manga['related_series'] = [markdownify.markdownify(name) for name in contents[2].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
+    manga['associated_names'] = [markdownify.markdownify(name) for name in contents[3].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
 
     if 'N/A' not in contents[4].get_text():
         if contents[4].a is None:
@@ -63,7 +65,8 @@ def parse_col_1(col,manga):
         manga['completely_scanlated'] = False
     else:
         manga['completely_scanlated'] = True
-    manga['anime_chapters'] = str(contents[8].string).replace('\n','')
+
+    manga['anime_chapters'] = None if 'N/A' in contents[8].get_text() else contents[8].encode_contents().decode('utf-8').replace('\n','').split('<br/>')
     manga['user_reviews'] = str(contents[9].string).replace('\n','')
 
     manga['forum'] = {

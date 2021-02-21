@@ -19,7 +19,6 @@ def search(query):
     try:
         results['series'] = search_parsers.parse_series(lists[1])
     except:
-        traceback.print_exc()
         results['series'] = []
     try:
         results['scanlators'] = search_parsers.parse_scanlators(lists[2])
@@ -86,7 +85,6 @@ def series(id):
     try:
         series = series_parsers.parse_series(content)
     except:
-        traceback.print_exc()
         series = {}
     return series
 
