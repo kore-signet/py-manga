@@ -1,6 +1,35 @@
 import re
 
 def parse_results(soup):
+    """
+    Parse search results from the advanced search page.
+
+    Parameters
+    ----------
+    content : BeautifulSoup
+        BeautifulSoup object of the search page content.
+
+    Returns
+    -------
+    results : list of dicts
+        List of search results.
+        ::
+
+            [
+                {
+                    'name': 'Series Name',
+                    'id': 'Series ID',
+                    'rating': 'Average Rating',
+                    'summary': 'Short summary',
+                    'thumbnail': 'Thumbnail link' or None,
+                    'year': 'Year manga started releasing',
+                    'is_adult': True or False
+                    # note! mangaupdates categorizes whole genres like 'Yuri' as adult
+                    # so use this at your own discretion :)
+                    # if this is true, thumbnail will always be None.
+                }
+            ]
+    """
     results = []
     for series in soup.find_all('div',attrs={'class':'col-12 col-lg-6 p-3 text'}):
         box = series.div.find_all('div',recursive=False)
