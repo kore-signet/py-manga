@@ -1,7 +1,7 @@
 # py-manga
 ## a library for getting information from mangaupdates.com!
 [![Documentation Status](https://readthedocs.org/projects/py-manga/badge/?version=latest)](https://py-manga.readthedocs.io/en/latest/?badge=latest)
-[![PyPi Package](https://img.shields.io/pypi/v/py-manga?color=dark-green&style=flat-square)](https://pypi.org/project/py-manga/)
+[![PyPi Package](https://img.shields.io/pypi/v/py-manga?color=dark-green)](https://pypi.org/project/py-manga/)
 
 note: i am not affiliated with mangaupdates.com
 
