@@ -212,7 +212,7 @@ def _parse_col_1(col,manga):
         manga['latest_releases'].append(release)
 
 
-    manga['status'] = str(contents[6].string).replace('\n','')
+    manga['status'] = contents[6].get_text(separator='!@#').replace('\n','').split('!@#')
     if str(contents[7].string).replace('\n','') == 'No':
         manga['completely_scanlated'] = False
     else:
