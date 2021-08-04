@@ -1,9 +1,9 @@
-import markdownify
+import markdownify, html2text
 from bs4 import Comment
 import re
-import sys
 
-def parse_series(content):
+
+def parse_series(content, description_format="markdown"):
     """
     Parse series info from mangaupdates.
 
@@ -11,6 +11,8 @@ def parse_series(content):
     ----------
     content : BeautifulSoup
         BeautifulSoup object of series page html.
+    description_format : str, optional
+        Format to transform the description into. can be 'plain', 'raw' or 'markdown'. defaults to 'markdown'.
 
     Returns
     -------
@@ -146,186 +148,267 @@ def parse_series(content):
 
     """
     manga = {}
-    manga['title'] = str(content.find('span',class_='releasestitle').string)
+    manga["title"] = str(content.find("span", class_="releasestitle").get_text())
 
-    cols = content.find_all('div',class_='col-6',recursive=False)
+    cols = content.find_all("div", class_="col-6", recursive=False)
     col_1 = cols[0]
     col_2 = cols[1]
 
-    _parse_col_1(col_1,manga)
-    _parse_col_2(col_2,manga)
+    _parse_col_1(col_1, manga, description_format)
+    _parse_col_2(col_2, manga)
     return manga
 
-def _parse_col_1(col,manga):
-    contents = col.find_all('div',class_='sContent',recursive=False)
+
+def _parse_col_1(col, manga, description_format):
+    contents = col.find_all("div", class_="sContent", recursive=False)
 
     desc_tag = contents[0]
-    for c in desc_tag.findAll(text=lambda text:isinstance(text, Comment) or text.name == 'script'):
-        c.extract()
 
-    comment_expr = re.compile(r'<!--(?:.|\n)+?\/\/-->')
-    manga['description'] = markdownify.markdownify(comment_expr.sub('',desc_tag.encode_contents().decode('utf-8'))).replace('[**M**ore...](javascript:dispdescMore())','').replace('[**L**ess...](javascript:dispdescLess())','').strip()
-    manga['type'] = str(contents[1].string).replace('\n','')
-
-    manga['related_series'] = []
-    for link in contents[2].findAll('a'):
-        manga['related_series'].append({
-            'name': link.get_text(),
-            'id': link.get('href','').replace('series.html?id=',''),
-            'relation': str(link.nextSibling).strip().replace('(','').replace(')','')
-        })
-
-
-    manga['associated_names'] = [markdownify.markdownify(name) for name in contents[3].encode_contents().decode('utf-8').replace('\n','').replace('</br>','').split('<br>') if len(name) > 0 and name != 'N/A']
-
-    if 'N/A' not in contents[4].get_text():
-        if contents[4].a is None:
-            manga['groups'] = [{ 'name': contents[4].get_text().strip(),'id': None }]
-        else:
-            manga['groups'] = []
-            for group in contents[4].findAll('a',attrs={'title':'Group Info'}):
-                manga['groups'].append({ 'name': group.get_text(), 'id': group['href'].replace('https://www.mangaupdates.com/groups.html?id=','')})
+    desc_more = desc_tag.find(id="div_desc_more")
+    if desc_more:
+        desc_more.a.extract()
+        desc_cleaned = desc_more.get_text()
     else:
-        manga['groups'] = []
+        desc_cleaned = desc_tag.get_text()
 
-    manga['latest_releases'] = []
-    numbers = contents[5].find_all('i')[:-1]
-    groups = contents[5].find_all('a')[:-1]
-    dates = contents[5].find_all('span')
+    if description_format == "markdown":
+        manga["description"] = markdownify.markdownify(desc_cleaned)
+    elif description_format == "raw":
+        manga["description"] = desc_cleaned
+    elif description_format == "plain":
+        text_converter = html2text.HTML2Text()
+        text_converter.ignore_links = True
+        text_converter.unicode_snob = True
+        text_converter.ignore_emphasis = True
+        text_converter.ignore_anchors = True
+        text_converter.ignore_images = True
+        manga["description"] = text_converter.handle(desc_cleaned)
 
-    for i in range(0,len(dates)):
+    manga["type"] = contents[1].get_text().replace("\n", "")
+
+    manga["related_series"] = []
+    for link in contents[2].findAll("a"):
+        manga["related_series"].append(
+            {
+                "name": link.get_text(),
+                "id": link.get("href", "").replace("series.html?id=", ""),
+                "relation": str(link.nextSibling)
+                .strip()
+                .replace("(", "")
+                .replace(")", ""),
+            }
+        )
+
+    manga["associated_names"] = [
+        markdownify.markdownify(name)
+        for name in contents[3]
+        .encode_contents()
+        .decode("utf-8")
+        .replace("\n", "")
+        .replace("</br>", "")
+        .split("<br>")
+        if len(name) > 0 and name != "N/A"
+    ]
+
+    if "N/A" not in contents[4].get_text():
+        if contents[4].a is None:
+            manga["groups"] = [{"name": contents[4].get_text().strip(), "id": None}]
+        else:
+            manga["groups"] = []
+            for group in contents[4].findAll("a", attrs={"title": "Group Info"}):
+                manga["groups"].append(
+                    {
+                        "name": group.get_text(),
+                        "id": group["href"].replace(
+                            "https://www.mangaupdates.com/groups.html?id=", ""
+                        ),
+                    }
+                )
+    else:
+        manga["groups"] = []
+
+    manga["latest_releases"] = []
+    numbers = contents[5].find_all("i")[:-1]
+    groups = contents[5].find_all("a")[:-1]
+    dates = contents[5].find_all("span")
+
+    for i in range(0, len(dates)):
         release = {
-            'group': {
-                'name': str(groups[i].string),
-                'id': str(groups[i].get('href','').replace('https://www.mangaupdates.com/groups.html?id=',''))
+            "group": {
+                "name": groups[i].get_text(),
+                "id": str(
+                    groups[i]
+                    .get("href", "")
+                    .replace("https://www.mangaupdates.com/groups.html?id=", "")
+                ),
             },
-            'date': dates[i]['title']
+            "date": dates[i]["title"],
         }
 
         # this is to check if there are volume numbers. its a bad solution, folks!
         if len(numbers) >= len(dates) * 2:
-            release['volume'] = str(numbers[i].string)
-            release['chapter'] = str(numbers[i+1].string)
+            release["volume"] = numbers[i].get_text()
+            release["chapter"] = numbers[i + 1].get_text()
         else:
-            release['chapter'] =  str(numbers[i].string)
+            release["chapter"] = numbers[i].get_text()
 
-        manga['latest_releases'].append(release)
+        manga["latest_releases"].append(release)
 
-
-    manga['status'] = contents[6].get_text(separator='!@#').replace('\n','').split('!@#')
-    if str(contents[7].string).replace('\n','') == 'No':
-        manga['completely_scanlated'] = False
+    manga["status"] = (
+        contents[6].get_text(separator="!@#").replace("\n", "").split("!@#")
+    )
+    if str(contents[7].string).replace("\n", "") == "No":
+        manga["completely_scanlated"] = False
     else:
-        manga['completely_scanlated'] = True
+        manga["completely_scanlated"] = True
 
-    manga['anime_chapters'] = None if 'N/A' in contents[8].get_text() else contents[8].encode_contents().decode('utf-8').replace('\n','').split('<br/>')
-    manga['user_reviews'] = str(contents[9].string).replace('\n','')
+    manga["anime_chapters"] = (
+        None
+        if "N/A" in contents[8].get_text()
+        else contents[8]
+        .encode_contents()
+        .decode("utf-8")
+        .replace("\n", "")
+        .split("<br/>")
+    )
+    manga["user_reviews"] = contents[9].get_text().replace("\n", "")
 
-    manga['forum'] = {
-        'status': str(contents[10].string),
-        'link': 'https://www.mangaupdates.com/' + contents[10].a.get('href','')
+    manga["forum"] = {
+        "status": contents[10].get_text(),
+        "link": "https://www.mangaupdates.com/" + contents[10].a.get("href", ""),
     }
 
     try:
         average_raw = contents[11].contents
-        manga['average'] = {
-            'average': str(average_raw[0]).replace('Average:','').replace(' ',''),
-            'votes': str(average_raw[2]).replace('(','').replace(')',''),
-            'bayesian': str(average_raw[5]).replace('<b>','').replace('</b>','')
+        manga["average"] = {
+            "average": str(average_raw[0]).replace("Average:", "").replace(" ", ""),
+            "votes": str(average_raw[2]).replace("(", "").replace(")", ""),
+            "bayesian": str(average_raw[5]).replace("<b>", "").replace("</b>", ""),
         }
     except:
-        manga['average'] = None
+        manga["average"] = None
 
-    manga['last_updated'] = str(contents[12].string).replace('\n','')
+    manga["last_updated"] = contents[12].get_text().replace("\n", "")
 
-def _parse_col_2(col,manga):
-    contents = col.find_all('div',class_='sContent',recursive=False)
 
-    manga['image'] = contents[0].center.img['src']
+def _parse_col_2(col, manga):
+    contents = col.find_all("div", class_="sContent", recursive=False)
 
-    manga['genres'] = []
-    for genre in contents[1].find_all('a')[:-1]:
-        manga['genres'].append(str(genre.u.string))
+    manga["image"] = contents[0].center.img["src"]
 
-    manga['categories'] = []
+    manga["genres"] = []
+    for genre in contents[1].find_all("a")[:-1]:
+        manga["genres"].append(genre.u.get_text())
+
+    manga["categories"] = []
     if contents[2].div:
-        for cat_raw in contents[2].div.ul.find_all('li'):
-            cat = cat_raw.find('a',rel='nofollow')
-            manga['categories'].append({
-                'category': str(cat.string),
-                'score': str(cat['title']).replace('Score:','')
-            })
+        for cat_raw in contents[2].div.ul.find_all("li"):
+            cat = cat_raw.find("a", rel="nofollow")
+            manga["categories"].append(
+                {
+                    "category": cat.get_text(),
+                    "score": str(cat["title"]).replace("Score:", ""),
+                }
+            )
 
-    manga['category_recs'] = []
-    for rec in contents[3].find_all('a',recursive=True):
-        if 'javascript' not in rec.get('href',''):
-            manga['category_recs'].append({
-                'name': rec.get_text(),
-                'id': rec.get('href','').replace('series.html?id=','')
-            })
+    manga["category_recs"] = []
+    for rec in contents[3].find_all("a", recursive=True):
+        if "javascript" not in rec.get("href", ""):
+            manga["category_recs"].append(
+                {
+                    "name": rec.get_text(),
+                    "id": rec.get("href", "").replace("series.html?id=", ""),
+                }
+            )
 
-    manga['recs'] = []
-    for rec in contents[4].find_all('a',recursive=True):
-        if 'javascript' not in rec.get('href',''):
-            manga['recs'].append({
-                'name': str(rec.get_text()),
-                'id': rec.get('href','').replace('series.html?id=','')
-            })
+    manga["recs"] = []
+    for rec in contents[4].find_all("a", recursive=True):
+        if "javascript" not in rec.get("href", ""):
+            manga["recs"].append(
+                {
+                    "name": rec.get_text(),
+                    "id": rec.get("href", "").replace("series.html?id=", ""),
+                }
+            )
 
-    manga['authors'] = []
-    for author in contents[5].find_all('a'):
-        manga['authors'].append({
-            'name': str(author.get_text()),
-            'id': author.get('href','').replace('https://www.mangaupdates.com/authors.html?id=','')  if contents[5].a else 'N/A'
-        })
+    manga["authors"] = []
+    for author in contents[5].find_all("a"):
+        manga["authors"].append(
+            {
+                "name": author.get_text(),
+                "id": author.get("href", "").replace(
+                    "https://www.mangaupdates.com/authors.html?id=", ""
+                )
+                if contents[5].a
+                else "N/A",
+            }
+        )
 
-    manga['artists'] = []
-    for artist in contents[6].find_all('a'):
-        manga['artists'].append({
-            'name': str(artist.get_text()),
-            'id': artist.get('href','').replace('https://www.mangaupdates.com/authors.html?id=','')  if contents[6].a else 'N/A'
-        })
+    manga["artists"] = []
+    for artist in contents[6].find_all("a"):
+        manga["artists"].append(
+            {
+                "name": artist.get_text(),
+                "id": artist.get("href", "").replace(
+                    "https://www.mangaupdates.com/authors.html?id=", ""
+                )
+                if contents[6].a
+                else "N/A",
+            }
+        )
 
-    manga['year'] = str(contents[7].get_text()).replace('\n','')
+    manga["year"] = contents[7].get_text().replace("\n", "")
 
-    manga['publisher'] = {
-        'name': str(contents[8].get_text().strip()),
-        'id': contents[8].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','')  if contents[8].a else 'N/A'
+    manga["publisher"] = {
+        "name": contents[8].get_text().strip(),
+        "id": contents[8]
+        .a.get("href", "")
+        .replace("https://www.mangaupdates.com/publishers.html?id=", "")
+        if contents[8].a
+        else "N/A",
     }
 
     # TODO: add publisher info
-    manga['serialized'] = {
-        'name': str(contents[9].get_text().strip()),
-        'link': 'https://www.mangaupdates.com/' + contents[9].a.get('href','') if contents[9].a else ''
+    manga["serialized"] = {
+        "name": contents[9].get_text().strip(),
+        "link": "https://www.mangaupdates.com/" + contents[9].a.get("href", "")
+        if contents[9].a
+        else "",
     }
 
-    manga['licensed'] = True if 'Yes' in contents[10].get_text() else False
+    manga["licensed"] = True if "Yes" in contents[10].get_text() else False
 
     # TODO: add volume/ongoing info
-    manga['english_publisher'] = {
-        'name': str(contents[11].get_text().strip()),
-        'id': str(contents[11].a.get('href','').replace('https://www.mangaupdates.com/publishers.html?id=','') if contents[11].a else 'N/A')
+    manga["english_publisher"] = {
+        "name": str(contents[11].get_text().strip()),
+        "id": str(
+            contents[11]
+            .a.get("href", "")
+            .replace("https://www.mangaupdates.com/publishers.html?id=", "")
+            if contents[11].a
+            else "N/A"
+        ),
     }
 
     pos_r = contents[12].contents
 
-    manga['positions'] = {
-        'weekly': str(pos_r[2].string),
-        'weekly_change': str(pos_r[5].string).replace('(','').replace(')',''),
-        'monthly': str(pos_r[9].string),
-        'monthly_change': str(pos_r[12].string).replace('(','').replace(')',''),
-        'tri_monthly': str(pos_r[16].string),
-        'tri_monthly_change': str(pos_r[19].string).replace('(','').replace(')',''),
-        'six_monthly': str(pos_r[23].string),
-        'six_monthly_change': str(pos_r[26].string).replace('(','').replace(')',''),
-        'yearly': str(pos_r[30].string),
-        'yearly_change': str(pos_r[33].string).replace('(','').replace(')','')
+    manga["positions"] = {
+        "weekly": str(pos_r[2].string),
+        "weekly_change": str(pos_r[5].string).replace("(", "").replace(")", ""),
+        "monthly": str(pos_r[9].string),
+        "monthly_change": str(pos_r[12].string).replace("(", "").replace(")", ""),
+        "tri_monthly": str(pos_r[16].string),
+        "tri_monthly_change": str(pos_r[19].string).replace("(", "").replace(")", ""),
+        "six_monthly": str(pos_r[23].string),
+        "six_monthly_change": str(pos_r[26].string).replace("(", "").replace(")", ""),
+        "yearly": str(pos_r[30].string),
+        "yearly_change": str(pos_r[33].string).replace("(", "").replace(")", ""),
     }
 
-    read_lists = contents[13].find_all('b')
-    manga['reading_lists'] = {
-        'reading': str(read_lists[0].get_text().strip()),
-        'wish': str(read_lists[1].get_text().strip()),
-        'unfinished': str(read_lists[2].get_text().strip()),
-        'custom': str(read_lists[3].get_text().strip())
+    read_lists = contents[13].find_all("b")
+    manga["reading_lists"] = {
+        "reading": read_lists[0].get_text().strip(),
+        "wish": read_lists[1].get_text().strip(),
+        "unfinished": read_lists[2].get_text().strip(),
+        "custom": read_lists[3].get_text().strip(),
     }

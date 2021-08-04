@@ -29,23 +29,27 @@ def parse_releases(content):
                 }
             ]
     """
-    releases = content.find_all('div',class_='text',recursive=False)[:-1]
+    releases = content.find_all("div", class_="text", recursive=False)[:-1]
     results = []
 
-    for i in range(0,len(releases),5):
+    for i in range(0, len(releases), 5):
         release = {}
 
-        release['series'] = {
-            'name': releases[i+1].get_text(),
-            'id': releases[i+1].a['href'].replace('https://www.mangaupdates.com/series.html?id=','')
+        release["series"] = {
+            "name": releases[i + 1].get_text(),
+            "id": releases[i + 1]
+            .a["href"]
+            .replace("https://www.mangaupdates.com/series.html?id=", ""),
         }
 
-        vol = releases[i+2].get_text()
-        release['vol'] = vol if vol else None
-        release['chapter'] = releases[i+3].get_text()
-        release['group'] = {
-            'name': releases[i+4].get_text(),
-            'id': releases[i+4].a['href'].replace('https://www.mangaupdates.com/groups.html?id=','')
+        vol = releases[i + 2].get_text()
+        release["vol"] = vol if vol else None
+        release["chapter"] = releases[i + 3].get_text()
+        release["group"] = {
+            "name": releases[i + 4].get_text(),
+            "id": releases[i + 4]
+            .a["href"]
+            .replace("https://www.mangaupdates.com/groups.html?id=", ""),
         }
         results.append(release)
 

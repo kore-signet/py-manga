@@ -27,29 +27,37 @@ def parse_releases(list):
                 }
             ]
     """
-    releases = list.find_all('div',class_='text')[:-1]
+    releases = list.find_all("div", class_="text")[:-1]
     results = []
 
-    for i in range(0,len(releases),5):
+    for i in range(0, len(releases), 5):
         release = {}
 
-        release['date'] = str(releases[i].string)
+        release["date"] = str(releases[i].string)
 
-        series_link = releases[i+1]
+        series_link = releases[i + 1]
         if series_link.a is None:
-            release['name'] = str(series_link.string)
+            release["name"] = str(series_link.string)
         else:
-            release['name'] = str(series_link.a.string)
-            release['id'] = series_link.a['href'].replace('https://www.mangaupdates.com/series.html?id=','')
+            release["name"] = str(series_link.a.string)
+            release["id"] = series_link.a["href"].replace(
+                "https://www.mangaupdates.com/series.html?id=", ""
+            )
 
-        vol = releases[i+2].get_text()
-        release['vol'] = vol if vol else None
-        release['chp'] = str(releases[i+3].string)
-        release['group'] = {'name': releases[i+4].get_text(),'id': releases[i+4].a['href'].replace('https://www.mangaupdates.com/groups.html?id=','')}
+        vol = releases[i + 2].get_text()
+        release["vol"] = vol if vol else None
+        release["chp"] = str(releases[i + 3].string)
+        release["group"] = {
+            "name": releases[i + 4].get_text(),
+            "id": releases[i + 4]
+            .a["href"]
+            .replace("https://www.mangaupdates.com/groups.html?id=", ""),
+        }
 
         results.append(release)
 
     return results
+
 
 def parse_series(list):
     """
@@ -78,26 +86,31 @@ def parse_series(list):
             ]
     """
 
-    series = list.find_all('div',class_='text')[:-1]
+    series = list.find_all("div", class_="text")[:-1]
     results = []
 
-    for i in range(0,len(series),4):
+    for i in range(0, len(series), 4):
         manga = {}
 
         series_link = series[i]
         if series_link.a is None:
-            manga['name'] = str(series_link.string)
+            manga["name"] = str(series_link.string)
         else:
-            manga['name'] = str(series_link.a.string)
-            manga['id'] = series_link.a['href'].replace('https://www.mangaupdates.com/series.html?id=','')
+            manga["name"] = str(series_link.a.string)
+            manga["id"] = series_link.a["href"].replace(
+                "https://www.mangaupdates.com/series.html?id=", ""
+            )
 
-        manga['genres'] = [genre.strip() for genre in series[i+1].get_text().split(',')]
-        manga['year'] = str(series[i+2].string)
-        manga['rating'] = str(series[i+3].string)
+        manga["genres"] = [
+            genre.strip() for genre in series[i + 1].get_text().split(",")
+        ]
+        manga["year"] = str(series[i + 2].string)
+        manga["rating"] = str(series[i + 3].string)
 
         results.append(manga)
 
     return results
+
 
 def parse_scanlators(list):
     """
@@ -126,30 +139,33 @@ def parse_scanlators(list):
                 }
             ]
     """
-    scanlators = list.find_all('div',class_='text')[:-1]
+    scanlators = list.find_all("div", class_="text")[:-1]
     results = []
 
-    for i in range(0,len(scanlators),3):
+    for i in range(0, len(scanlators), 3):
         group = {}
 
         group_link = scanlators[i]
         if group_link.a is None:
-            group['name'] = str(group_link.string)
+            group["name"] = str(group_link.string)
         else:
-            group['name'] = str(group_link.a.string)
-            group['id'] = group_link.a['href'].replace('https://www.mangaupdates.com/groups.html?id=','')
+            group["name"] = str(group_link.a.string)
+            group["id"] = group_link.a["href"].replace(
+                "https://www.mangaupdates.com/groups.html?id=", ""
+            )
 
-        group['active'] = True if scanlators[i+1].get_text() == 'Yes' else False
+        group["active"] = True if scanlators[i + 1].get_text() == "Yes" else False
 
-        group_contact = scanlators[i+2]
+        group_contact = scanlators[i + 2]
         if group_contact.a is None:
-            group['contact'] = group_contact.get_text()
+            group["contact"] = group_contact.get_text()
         else:
-            group['contact'] = [a['href'] for a in group_contact.find_all('a')]
+            group["contact"] = [a["href"] for a in group_contact.find_all("a")]
 
         results.append(group)
 
     return results
+
 
 def parse_authors(list):
     """
@@ -176,25 +192,27 @@ def parse_authors(list):
                 }
             ]
     """
-    authors = list.find_all('div',class_='text')[:-1]
+    authors = list.find_all("div", class_="text")[:-1]
     results = []
 
-    for i in range(0,len(authors),3):
+    for i in range(0, len(authors), 3):
         author = {}
 
         author_link = authors[i]
         if author_link.a is None:
-            author['name'] =  author_link.get_text()
+            author["name"] = author_link.get_text()
         else:
-            author['name'] = author_link.get_text()
-            author['id'] = author_link.a['href'].replace('https://www.mangaupdates.com/authors.html?id=','')
+            author["name"] = author_link.get_text()
+            author["id"] = author_link.a["href"].replace(
+                "https://www.mangaupdates.com/authors.html?id=", ""
+            )
 
-        author['series'] = int(authors[i+1].get_text())
+        author["series"] = int(authors[i + 1].get_text())
 
-        author['genres'] = []
+        author["genres"] = []
 
-        for gen in authors[i+2].find_all('a'):
-            author['genres'].append(gen.get_text())
+        for gen in authors[i + 2].find_all("a"):
+            author["genres"].append(gen.get_text())
 
         results.append(author)
 

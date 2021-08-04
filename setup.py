@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py-manga",
-    version="0.1.5",
+    version="0.1.7",
     author="Allie",
     author_email="allie@cat-girl.gay",
     description="A library to get information from mangaupdates.com",
@@ -21,7 +21,8 @@ setuptools.setup(
     install_requires=[
         'beautifulsoup4',
         'requests',
-        'markdownify'
+        'markdownify',
+        'html2text'
     ],
     python_requires='>=3.4'
 )
