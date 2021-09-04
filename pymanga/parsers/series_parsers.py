@@ -167,14 +167,14 @@ def _parse_col_1(col, manga, description_format):
     desc_more = desc_tag.find(id="div_desc_more")
     if desc_more:
         desc_more.a.extract()
-        desc_cleaned = desc_more.get_text()
+        desc_html = desc_more
     else:
-        desc_cleaned = desc_tag.get_text()
+        desc_html = desc_tag
 
     if description_format == "markdown":
-        manga["description"] = markdownify.markdownify(desc_cleaned)
+        manga["description"] = markdownify.markdownify(str(desc_html))
     elif description_format == "raw":
-        manga["description"] = desc_cleaned
+        manga["description"] = str(desc_html)
     elif description_format == "plain":
         text_converter = html2text.HTML2Text()
         text_converter.ignore_links = True
@@ -182,7 +182,7 @@ def _parse_col_1(col, manga, description_format):
         text_converter.ignore_emphasis = True
         text_converter.ignore_anchors = True
         text_converter.ignore_images = True
-        manga["description"] = text_converter.handle(desc_cleaned)
+        manga["description"] = text_converter.handle(str(desc_html))
 
     manga["type"] = contents[1].get_text().replace("\n", "")
 
@@ -390,20 +390,19 @@ def _parse_col_2(col, manga):
         ),
     }
 
-    pos_r = contents[12].contents
+    positions = dict()
+    pos_r = str(contents[12]).split('<br/>')
+    for title, p in zip(['weekly', 'monthly', 'tri_monthly', 'six_monthly', 'yearly'], pos_r):
+        position = re.search('<b>(\d+)</b>', p)
+        change = re.search('\(([^()]+)\)', p)
 
-    manga["positions"] = {
-        "weekly": str(pos_r[2].string),
-        "weekly_change": str(pos_r[5].string).replace("(", "").replace(")", ""),
-        "monthly": str(pos_r[9].string),
-        "monthly_change": str(pos_r[12].string).replace("(", "").replace(")", ""),
-        "tri_monthly": str(pos_r[16].string),
-        "tri_monthly_change": str(pos_r[19].string).replace("(", "").replace(")", ""),
-        "six_monthly": str(pos_r[23].string),
-        "six_monthly_change": str(pos_r[26].string).replace("(", "").replace(")", ""),
-        "yearly": str(pos_r[30].string),
-        "yearly_change": str(pos_r[33].string).replace("(", "").replace(")", ""),
-    }
+        positions[title] = position.group(1)
+        if change is not None:
+            positions[title+'_change'] = change.group(1)
+        else:
+            positions[title+'_change'] = ''
+
+    manga["positions"] = positions
 
     read_lists = contents[13].find_all("b")
     manga["reading_lists"] = {
