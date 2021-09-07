@@ -69,12 +69,15 @@ def parse_group(contents, note_format="markdown"):
 
     # info 
     info_tags = info.find('div', class_='row').find_all("div", class_="col-6", recursive=False)
-    if note_format=='markdown':
-        notes = markdownify(str(info_tags[27]))
-    elif note_format=='raw':
-        notes = str(info_tags[27])
-    else:
-        notes = info_tags[27].get_text()
+    try:
+        if note_format=='markdown':
+            notes = markdownify(str(info_tags[27]))
+        elif note_format=='raw':
+            notes = str(info_tags[27])
+        else:
+            notes = info_tags[27].get_text()
+    except IndexError:
+        notes = ''
 
     group = dict(
         name=info_tags[1].get_text(),
