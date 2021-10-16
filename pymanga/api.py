@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import re
-import os
+import time
 from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser, group_parsers
 
 
@@ -174,7 +174,7 @@ def advanced_search(params, all_pages=False, page=1):
             r, _ = advanced_search(params, page=p)
             results = results + r
 
-        os.sleep(1)  # be polite!
+        time.sleep(1)  # be polite!
 
     return (results, pages)
 

@@ -2,7 +2,6 @@ import markdownify, html2text
 from bs4 import Comment
 import re
 
-
 def parse_series(content, description_format="markdown"):
     """
     Parse series info from mangaupdates.
@@ -233,6 +232,8 @@ def _parse_col_1(col, manga, description_format):
     dates = contents[5].find_all("span")
 
     for i in range(0, len(dates)):
+        if len(numbers) != len(groups):
+            continue
         release = {
             "group": {
                 "name": groups[i].get_text(),

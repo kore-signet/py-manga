@@ -11,6 +11,8 @@ def parse_count(text):
     result = dict()
     categories = text.split(',')
     for cat in categories:
+        if len(cat)==0:
+            continue
         parsed = re.search('([^()]+)\(([^()]+)\)', cat)
         name = parsed.group(1).strip()
         count = parsed.group(2).strip()
