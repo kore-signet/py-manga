@@ -1,6 +1,7 @@
 import markdownify, html2text
 from bs4 import Comment
 import re
+import urllib
 
 def parse_series(content, description_format="markdown"):
     """
@@ -334,16 +335,30 @@ def _parse_col_2(col, manga):
 
     manga["authors"] = []
     for author in contents[5].find_all("a"):
-        manga["authors"].append(
-            {
-                "name": author.get_text(),
-                "id": author.get("href", "").replace(
-                    "https://www.mangaupdates.com/authors.html?id=", ""
-                )
-                if contents[5].a
-                else "N/A",
-            }
-        )
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(author.get('href', '')).query)
+        if 'id' in query.keys():
+            manga["authors"].append(
+                {
+                    "name": author.get_text(),
+                    "id": query['id'][0]
+                    if contents[5].a
+                    else "N/A",
+                }
+            )
+        elif 'author' in query.keys():
+            manga["authors"].append(
+                {
+                    "name": query['author'][0],
+                    "id": "N/A",
+                }
+            )
+        else:
+            manga["authors"].append(
+                {
+                    "name": author.get_text(),
+                    "id": "N/A",
+                }
+            )
 
     manga["artists"] = []
     for artist in contents[6].find_all("a"):
