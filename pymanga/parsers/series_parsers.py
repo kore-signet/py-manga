@@ -362,16 +362,30 @@ def _parse_col_2(col, manga):
 
     manga["artists"] = []
     for artist in contents[6].find_all("a"):
-        manga["artists"].append(
-            {
-                "name": artist.get_text(),
-                "id": artist.get("href", "").replace(
-                    "https://www.mangaupdates.com/authors.html?id=", ""
-                )
-                if contents[6].a
-                else "N/A",
-            }
-        )
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(artist.get('href', '')).query)
+        if 'id' in query.keys():
+            manga["artists"].append(
+                {
+                    "name": artist.get_text(),
+                    "id": query['id'][0]
+                    if contents[6].a
+                    else "N/A",
+                }
+            )
+        elif 'author' in query.keys():
+            manga["artists"].append(
+                {
+                    "name": query['author'][0],
+                    "id": "N/A",
+                }
+            )
+        else:
+            manga["artists"].append(
+                {
+                    "name": artist.get_text(),
+                    "id": "N/A",
+                }
+            )
 
     manga["year"] = contents[7].get_text().replace("\n", "")
 
