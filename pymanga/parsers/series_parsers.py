@@ -1,5 +1,5 @@
 import markdownify, html2text
-from bs4 import Comment
+from bs4 import Comment, BeautifulSoup
 import re
 import urllib
 
@@ -256,8 +256,9 @@ def _parse_col_1(col, manga, description_format):
 
         manga["latest_releases"].append(release)
 
+    [m.unwrap() for t in ['b', 'i', 'u'] for m in contents[6].findAll(t)]
     manga["status"] = (
-        contents[6].get_text(separator="!@#").replace("\n", "").split("!@#")
+        BeautifulSoup(repr(contents[6]), "html.parser").get_text(separator="!@#").replace("\n", "").split("!@#")
     )
     if str(contents[7].string).replace("\n", "") == "No":
         manga["completely_scanlated"] = False
