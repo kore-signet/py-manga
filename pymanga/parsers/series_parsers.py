@@ -1,7 +1,7 @@
 import markdownify, html2text
-from bs4 import Comment
+from bs4 import Comment, BeautifulSoup
 import re
-
+import urllib
 
 def parse_series(content, description_format="markdown"):
     """
@@ -233,6 +233,8 @@ def _parse_col_1(col, manga, description_format):
     dates = contents[5].find_all("span")
 
     for i in range(0, len(dates)):
+        if len(numbers) != len(groups):
+            continue
         release = {
             "group": {
                 "name": groups[i].get_text(),
@@ -254,8 +256,9 @@ def _parse_col_1(col, manga, description_format):
 
         manga["latest_releases"].append(release)
 
+    [m.unwrap() for t in ['b', 'i', 'u'] for m in contents[6].findAll(t)]
     manga["status"] = (
-        contents[6].get_text(separator="!@#").replace("\n", "").split("!@#")
+        BeautifulSoup(repr(contents[6]), "html.parser").get_text(separator="!@#").replace("\n", "").split("!@#")
     )
     if str(contents[7].string).replace("\n", "") == "No":
         manga["completely_scanlated"] = False
@@ -333,29 +336,57 @@ def _parse_col_2(col, manga):
 
     manga["authors"] = []
     for author in contents[5].find_all("a"):
-        manga["authors"].append(
-            {
-                "name": author.get_text(),
-                "id": author.get("href", "").replace(
-                    "https://www.mangaupdates.com/authors.html?id=", ""
-                )
-                if contents[5].a
-                else "N/A",
-            }
-        )
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(author.get('href', '')).query)
+        if 'id' in query.keys():
+            manga["authors"].append(
+                {
+                    "name": author.get_text(),
+                    "id": query['id'][0]
+                    if contents[5].a
+                    else "N/A",
+                }
+            )
+        elif 'author' in query.keys():
+            manga["authors"].append(
+                {
+                    "name": query['author'][0],
+                    "id": "N/A",
+                }
+            )
+        else:
+            manga["authors"].append(
+                {
+                    "name": author.get_text(),
+                    "id": "N/A",
+                }
+            )
 
     manga["artists"] = []
     for artist in contents[6].find_all("a"):
-        manga["artists"].append(
-            {
-                "name": artist.get_text(),
-                "id": artist.get("href", "").replace(
-                    "https://www.mangaupdates.com/authors.html?id=", ""
-                )
-                if contents[6].a
-                else "N/A",
-            }
-        )
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(artist.get('href', '')).query)
+        if 'id' in query.keys():
+            manga["artists"].append(
+                {
+                    "name": artist.get_text(),
+                    "id": query['id'][0]
+                    if contents[6].a
+                    else "N/A",
+                }
+            )
+        elif 'author' in query.keys():
+            manga["artists"].append(
+                {
+                    "name": query['author'][0],
+                    "id": "N/A",
+                }
+            )
+        else:
+            manga["artists"].append(
+                {
+                    "name": artist.get_text(),
+                    "id": "N/A",
+                }
+            )
 
     manga["year"] = contents[7].get_text().replace("\n", "")
 

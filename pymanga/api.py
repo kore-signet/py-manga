@@ -2,8 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import re
-import os
-from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser
+import time
+from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser, group_parsers
 
 
 def search(query):
@@ -174,7 +174,7 @@ def advanced_search(params, all_pages=False, page=1):
             r, _ = advanced_search(params, page=p)
             results = results + r
 
-        os.sleep(1)  # be polite!
+        time.sleep(1)  # be polite!
 
     return (results, pages)
 
@@ -353,7 +353,6 @@ def series(id, description_format="markdown"):
     )
     return series_parsers.parse_series(content, description_format=description_format)
 
-
 def releases(id):
     """
     Get latest releases of a manga
@@ -404,3 +403,54 @@ def releases(id):
     except:
         releases = []
     return releases
+
+def group(id):
+    """
+    Get group info from mangaupdates.
+
+    Parameters
+    ----------
+    id : str
+        Series id.
+
+    Returns
+    -------
+    group : dict
+        group information.
+        ::
+
+            {
+                'name': 'Group name',
+                'IRC': 'IRC link',
+                'website': 'link',
+                'forum': 'forum link, usually mangadex',
+                'discord': 'link to discord server',
+                'twitter': 'link to twitter',
+                'facebook': 'link to facebook',
+                'release_frequency': 'release frequency',
+                'number_of_release': 'number of scanlated releases',
+                'active': 'the status of the group',
+                'total_series' : 'number of scanlated series',
+                'genres': 'genre count of scanlated series',
+                'categiries': 'category count of scanlated series',
+                'notes': 'useful information, like previous name'
+                'series': [
+                    {
+                        'id': 'series id',
+                        'name': 'series name',
+                    }
+                ]
+                'releases': [
+                    # TODO
+                ]
+            }
+
+    """
+    r = requests.get("https://mangaupdates.com/groups.html", params={"id": id})
+    soup = BeautifulSoup(r.text, "html.parser")
+    contents = (
+        soup.find("div", id="main_content")
+        .find("div", class_="p-2", recursive=False)
+        .find_all('div', class_='table_content')
+    )
+    return group_parsers.parse_group(contents)
