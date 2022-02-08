@@ -3,7 +3,14 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import re
 import time
-from .parsers import search_parsers, series_parsers, releases_parsers, adv_search_parser, group_parsers
+from .parsers import (
+    search_parsers,
+    series_parsers,
+    releases_parsers,
+    adv_search_parser,
+    group_parsers,
+    author_parsers,
+)
 
 
 def search(query):
@@ -353,6 +360,7 @@ def series(id, description_format="markdown"):
     )
     return series_parsers.parse_series(content, description_format=description_format)
 
+
 def releases(id):
     """
     Get latest releases of a manga
@@ -404,6 +412,7 @@ def releases(id):
         releases = []
     return releases
 
+
 def group(id):
     """
     Get group info from mangaupdates.
@@ -411,7 +420,7 @@ def group(id):
     Parameters
     ----------
     id : str
-        Series id.
+        Group id.
 
     Returns
     -------
@@ -451,6 +460,52 @@ def group(id):
     contents = (
         soup.find("div", id="main_content")
         .find("div", class_="p-2", recursive=False)
-        .find_all('div', class_='table_content')
+        .find_all("div", class_="table_content")
     )
     return group_parsers.parse_group(contents)
+
+
+def author(id):
+    """
+    Get author info from mangaupdates.
+
+    Parameters
+    ----------
+    id : str
+        Author id.
+    description_format : str, optional
+        Format to transform the description into. can be 'plain', 'raw' or 'markdown'. defaults to 'plain'.
+    Returns
+    -------
+    group : dict
+        group information.
+        ::
+
+            {
+                'name': 'Author name (as written in native language)',
+                'header_name': 'Author name (as written in the page header)',
+                'associated_names': ["authors associated names"],
+                'birth_place': "author's birth place",
+                'birth_date': "author's birth date",
+                'zodiac': "author's zodiac sign",
+                'blood_type': "author's blood type",
+                'gender': "author's gender",
+                'genres': {
+                    'genre author has worked in': 42 # number of series of this genre the author has worked on
+                },
+                'website': "author's website",
+                'twitter': "author's twitter profile",
+                'facebook': "author's facebook profile",
+                'last_update': 'last time this page was updated',
+                'series': { # series author has worked on
+                    'id': 'series id, if present',
+                    'title': 'series title',
+                    'year': 'year series was published',
+                    'genres': ['genres of series']
+                },
+                'comments': "notes on the author's page"
+
+    """
+    r = requests.get("https://www.mangaupdates.com/authors.html", params={"id": id})
+    soup = BeautifulSoup(r.text, "html.parser")
+    return author_parsers.parse_author(soup)

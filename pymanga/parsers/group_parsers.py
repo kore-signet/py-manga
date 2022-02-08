@@ -1,23 +1,6 @@
 from markdownify import markdownify
 import re
-
-def extract_href_or_text(content):
-    if content.find('a') is not None:
-        return content.find('a').get('href')
-    else:
-        return content.get_text()
-
-def parse_count(text):
-    result = dict()
-    categories = text.split(',')
-    for cat in categories:
-        if len(cat)==0:
-            continue
-        parsed = re.search('([^()]+)\(([^()]+)\)', cat)
-        name = parsed.group(1).strip()
-        count = parsed.group(2).strip()
-        result[name] = int(count)
-    return result
+from .utils import extract_href_or_text, parse_count
 
 
 def parse_group(contents, note_format="markdown"):
@@ -50,7 +33,7 @@ def parse_group(contents, note_format="markdown"):
                 'active': 'the status of the group',
                 'total_series' : 'number of scanlated series',
                 'genres': 'genre count of scanlated series',
-                'categiries': 'category count of scanlated series',
+                'categories': 'category count of scanlated series',
                 'notes': 'useful information, like previous name'
                 'series': [
                     {
@@ -69,17 +52,19 @@ def parse_group(contents, note_format="markdown"):
     releases = contents[1]
     series = contents[2]
 
-    # info 
-    info_tags = info.find('div', class_='row').find_all("div", class_="col-6", recursive=False)
+    # info
+    info_tags = info.find("div", class_="row").find_all(
+        "div", class_="col-6", recursive=False
+    )
     try:
-        if note_format=='markdown':
+        if note_format == "markdown":
             notes = markdownify(str(info_tags[27]))
-        elif note_format=='raw':
+        elif note_format == "raw":
             notes = str(info_tags[27])
         else:
             notes = info_tags[27].get_text()
     except IndexError:
-        notes = ''
+        notes = ""
 
     group = dict(
         name=info_tags[1].get_text(),
@@ -94,19 +79,23 @@ def parse_group(contents, note_format="markdown"):
         active=info_tags[19].get_text(),
         total_series=info_tags[21].get_text(),
         genres=parse_count(info_tags[23].get_text()),
-        categiries=parse_count(info_tags[25].get_text()),
+        categories=parse_count(info_tags[25].get_text()),
         notes=notes,
     )
 
     series_parsed = []
-    for s in series.find_all('div', class_='col-6'):
-        if s.find('a') is None:
+    for s in series.find_all("div", class_="col-6"):
+        if s.find("a") is None:
             continue
-        id = s.find('a').get('href').replace('https://www.mangaupdates.com/series.html?id=', '')
+        id = (
+            s.find("a")
+            .get("href")
+            .replace("https://www.mangaupdates.com/series.html?id=", "")
+        )
         name = s.get_text()
         series_parsed.append(dict(id=id, name=name))
-    group['series'] = series_parsed
+    group["series"] = series_parsed
 
-    group['releases'] = []
+    group["releases"] = []
 
     return group

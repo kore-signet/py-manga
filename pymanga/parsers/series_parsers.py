@@ -3,6 +3,7 @@ from bs4 import Comment, BeautifulSoup
 import re
 import urllib
 
+
 def parse_series(content, description_format="markdown"):
     """
     Parse series info from mangaupdates.
@@ -256,9 +257,12 @@ def _parse_col_1(col, manga, description_format):
 
         manga["latest_releases"].append(release)
 
-    [m.unwrap() for t in ['b', 'i', 'u'] for m in contents[6].findAll(t)]
+    [m.unwrap() for t in ["b", "i", "u"] for m in contents[6].findAll(t)]
     manga["status"] = (
-        BeautifulSoup(repr(contents[6]), "html.parser").get_text(separator="!@#").replace("\n", "").split("!@#")
+        BeautifulSoup(repr(contents[6]), "html.parser")
+        .get_text(separator="!@#")
+        .replace("\n", "")
+        .split("!@#")
     )
     if str(contents[7].string).replace("\n", "") == "No":
         manga["completely_scanlated"] = False
@@ -336,20 +340,20 @@ def _parse_col_2(col, manga):
 
     manga["authors"] = []
     for author in contents[5].find_all("a"):
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(author.get('href', '')).query)
-        if 'id' in query.keys():
+        query = urllib.parse.parse_qs(
+            urllib.parse.urlparse(author.get("href", "")).query
+        )
+        if "id" in query.keys():
             manga["authors"].append(
                 {
                     "name": author.get_text(),
-                    "id": query['id'][0]
-                    if contents[5].a
-                    else "N/A",
+                    "id": query["id"][0] if contents[5].a else "N/A",
                 }
             )
-        elif 'author' in query.keys():
+        elif "author" in query.keys():
             manga["authors"].append(
                 {
-                    "name": query['author'][0],
+                    "name": query["author"][0],
                     "id": "N/A",
                 }
             )
@@ -363,20 +367,20 @@ def _parse_col_2(col, manga):
 
     manga["artists"] = []
     for artist in contents[6].find_all("a"):
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(artist.get('href', '')).query)
-        if 'id' in query.keys():
+        query = urllib.parse.parse_qs(
+            urllib.parse.urlparse(artist.get("href", "")).query
+        )
+        if "id" in query.keys():
             manga["artists"].append(
                 {
                     "name": artist.get_text(),
-                    "id": query['id'][0]
-                    if contents[6].a
-                    else "N/A",
+                    "id": query["id"][0] if contents[6].a else "N/A",
                 }
             )
-        elif 'author' in query.keys():
+        elif "author" in query.keys():
             manga["artists"].append(
                 {
-                    "name": query['author'][0],
+                    "name": query["author"][0],
                     "id": "N/A",
                 }
             )
@@ -422,16 +426,18 @@ def _parse_col_2(col, manga):
     }
 
     positions = dict()
-    pos_r = str(contents[12]).split('<br/>')
-    for title, p in zip(['weekly', 'monthly', 'tri_monthly', 'six_monthly', 'yearly'], pos_r):
-        position = re.search('<b>(\d+)</b>', p)
-        change = re.search('\(([^()]+)\)', p)
+    pos_r = str(contents[12]).split("<br/>")
+    for title, p in zip(
+        ["weekly", "monthly", "tri_monthly", "six_monthly", "yearly"], pos_r
+    ):
+        position = re.search("<b>(\d+)</b>", p)
+        change = re.search("\(([^()]+)\)", p)
 
         positions[title] = position.group(1)
         if change is not None:
-            positions[title+'_change'] = change.group(1)
+            positions[title + "_change"] = change.group(1)
         else:
-            positions[title+'_change'] = ''
+            positions[title + "_change"] = ""
 
     manga["positions"] = positions
 

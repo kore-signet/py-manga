@@ -52,9 +52,9 @@ def parse_results(soup):
 
         results.append(
             {
-                "name": info[0].find('a',dict(href=True)).u.b.get_text(),
+                "name": info[0].find("a", dict(href=True)).u.b.get_text(),
                 "id": info[0]
-                .find('a',dict(href=True))["href"]
+                .find("a", dict(href=True))["href"]
                 .replace("https://www.mangaupdates.com/series.html?id=", ""),
                 "genres": info[1].a["title"].split(", "),
                 "summary": info[2].get_text(),
