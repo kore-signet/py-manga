@@ -301,7 +301,10 @@ def _parse_col_1(col, manga, description_format):
 def _parse_col_2(col, manga):
     contents = col.find_all("div", class_="sContent", recursive=False)
 
-    manga["image"] = contents[0].center.img["src"]
+    try:
+        manga["image"] = contents[0].center.img["src"]
+    except:
+        manga["image"] = None
 
     manga["genres"] = []
     for genre in contents[1].find_all("a")[:-1]:
