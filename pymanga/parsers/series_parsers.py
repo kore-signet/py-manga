@@ -435,8 +435,10 @@ def _parse_col_2(col, manga):
     ):
         position = re.search("<b>(\d+)</b>", p)
         change = re.search("\(([^()]+)\)", p)
-
-        positions[title] = position.group(1)
+        
+        if position is not None:
+            positions[title] = position.group(1)
+        
         if change is not None:
             positions[title + "_change"] = change.group(1)
         else:
@@ -444,10 +446,22 @@ def _parse_col_2(col, manga):
 
     manga["positions"] = positions
 
-    read_lists = contents[13].find_all("b")
-    manga["reading_lists"] = {
-        "reading": read_lists[0].get_text().strip(),
-        "wish": read_lists[1].get_text().strip(),
-        "unfinished": read_lists[2].get_text().strip(),
-        "custom": read_lists[3].get_text().strip(),
-    }
+    manga["reading_lists"] = dict()
+    cnt = ""
+    for obj in contents[13]:
+        if "<b>" in str(obj):
+            cnt = obj.get_text().strip()
+
+        if "lists" in str(obj):
+            print(cnt)
+            if "reading" in str(obj):
+                manga["reading_lists"]["reading"] = cnt
+            if "wish" in str(obj):
+                manga["reading_lists"]["wish"] = cnt
+            if "completed" in str(obj):
+                manga["reading_lists"]["completed"] = cnt
+            if "unfinished" in str(obj):
+                manga["reading_lists"]["unfinished"] = cnt
+            if "custom" in str(obj):
+                manga["reading_lists"]["custom"] = cnt
+
