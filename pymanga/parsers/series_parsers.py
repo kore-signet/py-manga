@@ -453,7 +453,6 @@ def _parse_col_2(col, manga):
             cnt = obj.get_text().strip()
 
         if "lists" in str(obj):
-            print(cnt)
             if "reading" in str(obj):
                 manga["reading_lists"]["reading"] = cnt
             if "wish" in str(obj):
